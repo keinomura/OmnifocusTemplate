@@ -1,0 +1,168 @@
+#!/bin/bash
+
+#numLine=1
+#cat $1 | while read line
+
+#do 
+
+ #makeLine()
+
+#done
+
+
+
+function makeLine(){
+eachline=$line
+
+if echo $eachline| grep -sq "-"; then
+
+#line1="- スケジュール登録 @estimate(5分) @due(2016-09-28 00:00) @defer(2016-09-27 00:00)"
+#line2="- スケジュール登録 {5,-2d, +4d}"
+
+#eachline="- スケジュール登録 {5,endailimit-2d, endailimit+4d}"
+#line2="- スケジュール登録 {5,gakkaisanka-2d, gakkaisanka+4d}"
+
+endailimit=20161027
+gakkaisanka=20170126
+
+
+#lineから{}内の要素を取り出す
+timeArryWithSpace=`echo $eachline|sed "s/^.*{\(.*\)}*.$/\1/"`
+#スペース消去
+#echo "time Arry with space is "$timeArryWithSpace
+timeArry=`echo $timeArryWithSpace|tr -d ' '`
+
+#echo "time arry is " $timeArry
+#時間要素の個別取り出し, 1,2,3の変数に分ける。
+IFS=','　#カンマで区切り
+set -- $timeArry
+
+IFS=
+
+#echo "S1 is "$1
+#echo "S2 is "$2
+#echo "S3 is "$3
+#deferDate開始日時の処理
+if echo $3| grep -sq "endailimit"; then
+  #文字列を消して数字だけにする
+  deferDateDiff=`echo $3|sed "s/endailimit//g"`
+    #数字ない場合
+    if [ -z "$deferDateDiff"]; then
+      deferDate=`date -j -f "%Y%m%d" ${endailimit} +%Y-%m-%d`
+    else
+      deferDate=`date -j -v${deferDateDiff} -f "%Y%m%d" ${endailimit} +%Y-%m-%d`
+    fi
+elif echo "$3" | grep -sq "gakkaisanka"; then
+  deferDateDiff=`echo $3|sed "s/gakkaisanka//g"`
+    if [ -z "$deferDateDiff"]; then
+      deferDate=`date -j -f "%Y%m%d" ${gakkaisanka} +%Y-%m-%d`
+    else
+      deferDate=`date -j -v${deferDateDiff} -f "%Y%m%d" ${gakkaisanka} +%Y-%m-%d`
+    fi
+elif echo "$3" | grep -sq "today"; then
+  deferDateDiff=`echo $3|sed "s/today//g"`
+    if [ -z "$deferDateDiff"]; then
+      deferDate=`date -j +%Y-%m-%d`
+    else
+      deferDate=`date -j -v${deferDateDiff} +%Y-%m-%d`
+    fi
+else 
+  deferDateDiff=$3
+  deferDate=`date -j -v${deferDateDiff} +%Y-%m-%d`
+fi
+
+#dueDateの処理
+if echo $2| grep -sq "endailimit"; then
+  #文字列を消して数字だけにする
+  dueDateDiff=`echo $2|sed "s/endailimit//g"`
+    #数字ない場合
+    if [ -z "$dueDateDiff"]; then
+      dueDate=`date -j -f "%Y%m%d" ${endailimit} +%Y-%m-%d`
+    else
+      dueDate=`date -j -v${dueDateDiff} -f "%Y%m%d" ${endailimit} +%Y-%m-%d`
+    fi
+elif echo "$2" | grep -sq "gakkaisanka"; then
+  dueDateDiff=`echo $2|sed "s/gakkaisanka//g"`
+    if [ -z "$dueDateDiff"]; then
+      dueDate=`date -j -f "%Y%m%d" ${gakkaisanka} +%Y-%m-%d`
+    else
+      dueDate=`date -j -v${dueDateDiff} -f "%Y%m%d" ${gakkaisanka} +%Y-%m-%d`
+    fi
+elif echo "$2" | grep -sq "today"; then
+  dueDateDiff=`echo $2|sed "s/today//g"`
+    if [ -z "$dueDateDiff"]; then
+      dueDate=`date -j +%Y-%m-%d`
+    else
+      dueDate=`date -j -v${dueDateDiff} +%Y-%m-%d`
+    fi
+else 
+  dueDateDiff=$2
+  dueDate=`date -j -v${dueDateDiff} +%Y-%m-%d`
+fi
+
+#echo "S1 is" $1
+#echo "dueDate is " $dueDate
+#echo "deferDate is " $deferDate
+
+#テキスト挿入用時間にする
+if [ -z "$1"]; then
+#echo "S1 is 0 $1"
+  estimateTime=
+else
+#echo "S1 is not 0 $1"
+  estimateTime=`echo '@estimate('$1'分)'`
+fi
+
+if [ -z "$dueDate"]; then
+  dueDateTime=
+else
+  dueDateTime=`echo '@due('$dueDate' 17:00)'`
+fi
+if [ -z "$deferDate"]; then
+  deferDateTime=
+else
+  deferDateTime=`echo '@defer('$deferDate' 7:00)'`
+fi
+
+#echo $estimateTime
+#echo $dueDateTime
+#echo $deferDateTime
+
+# {}内消去
+#lineDel1=`echo ${line2}|sed "s/^.*{\(.*\)}*.$/^.*{}*.$/"`
+lineDel1=`echo $eachline|sed "s/\(.*\){.*}\(.*\)/\1\2/"`
+#lineDel2=`echo $lineDel1|sed "s/{}//"`
+
+echo $lineDel1 $estimateTime $dueDateTime $deferDateTime
+
+#newLine=`echo $lineDel1 $estimateTime $dueDateTime $deferDateTime`
+
+#return $newLine
+
+else
+
+echo $eachline
+
+fi
+
+}
+
+
+#line="- スケジュール登録 {5,-2d, +4d}"
+#line="	- スケジュール登録 {, today, endailimit}"
+#line=		—思い立った日に開始する {3, today, endailimit-1m}
+#line=		- 学会のURLをOmnifocus Projectタイトルに貼り付ける {5, today, endailimit-1m}
+#line=		- 学会の日にち、開催場所をカレンダーに入力する {5, today, endailimit-1m}
+#makeLine $line
+
+############
+
+cat $1 | while read line
+
+do 
+
+ makeLine >> test1 #$line 
+
+done
+
+exit 0
